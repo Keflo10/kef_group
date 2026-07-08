@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sales_app/pages/auth/signup.dart';
 import '/core/constants/colors.dart';
 // import 'signup_screen.dart';
 
@@ -47,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // App Name
                 const Text(
-                  "Expenditure Tracker",
+                  "Sales and expense Tracker",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -182,13 +183,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             TextButton(
                               onPressed: () {
-                                // here we shall add the Navigate to Signup Screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignupScreen(),
+                                  ),
+                                );
                               },
-
-                              child: const Text(
-                                "Sign Up",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                              child: const Text("Sign Up"),
                             ),
                           ],
                         ),
