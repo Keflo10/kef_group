@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "910710598571",
+    "firebase_url": "https://sales-expense-tracker-46e17-default-rtdb.firebaseio.com",
+    "project_id": "sales-expense-tracker-46e17",
+    "storage_bucket": "sales-expense-tracker-46e17.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910710598571:android:ffa26713b68a6a2708c0ee",
+        "android_client_info": {
+          "package_name": "com.example.sales_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "910710598571-7hj418dggjqcfbp3n7o31h3378gt6qak.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBD92URWOKSdhq9niQ2NRVgWMre2a5BqDM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "910710598571-7hj418dggjqcfbp3n7o31h3378gt6qak.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
