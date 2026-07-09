@@ -9,7 +9,7 @@ class AppColors {
   static const Color surface = Color(0xFFFFFFFF);
 
   static const Color textPrimary = Color(0xFF1E293B);
-  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textSecondary = Color(0xFFB9B8B8);
 
   static const Color income = Color(0xFF16A34A);
   static const Color expense = Color(0xFFE22929);
@@ -23,4 +23,5 @@ class AppColors {
 
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
+  static const Color black0 = Color(0xFF000020);
 }
