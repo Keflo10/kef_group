@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:sales_app/pages/auth/login.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'core/constants/colors.dart';
+import 'wrapper.dart';
 
-void main() {
+// main() to be async
+void main() async {
+  //  Required to ensure plugin services are initialized before runApp
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Then we Initialize Firebase using the generated firebase_options.dart file
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const PesaTrack());
 }
 
@@ -13,14 +24,11 @@ class PesaTrack extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-
       theme: ThemeData(
-        scaffoldBackgroundColor: AppColors.background,
-
         fontFamily: "Poppins",
+        scaffoldBackgroundColor: AppColors.background,
       ),
-
-      home: LoginScreen(),
+      home: const Wrapper(),
     );
   }
 }
