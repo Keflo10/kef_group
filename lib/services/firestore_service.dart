@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:sales_app/models/transaction_model.dart';
 
 class FirestoreService {
@@ -6,14 +7,21 @@ class FirestoreService {
 
   // Stream of transactions for a user
   Stream<List<TransactionModel>> getTransactions(String userId) {
+    debugPrint("Fetching transactions for user: $userId (Sorted in-memory)");
     return _db
         .collection('transactions')
         .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => TransactionModel.fromMap(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+      final transactions = snapshot.docs
+          .map((doc) => TransactionModel.fromMap(doc.data(), doc.id))
+          .toList();
+
+      // Sort in-memory to avoid needing a Firestore composite index
+      transactions.sort((a, b) => b.date.compareTo(a.date));
+
+      return transactions;
+    });
   }
 
   // Add a transaction

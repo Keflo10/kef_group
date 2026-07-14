@@ -4,12 +4,11 @@ import 'package:sales_app/models/transaction_model.dart';
 import 'package:sales_app/services/auth_service.dart';
 import 'package:sales_app/services/firestore_service.dart';
 import 'package:intl/intl.dart';
-import 'package:sales_app/widgets/bottom_nav_bar.dart';
-import 'package:sales_app/pages/reports/reporting_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final TransactionType initialType;
-  const AddTransactionScreen({super.key, this.initialType = TransactionType.expense});
+  const AddTransactionScreen(
+      {super.key, this.initialType = TransactionType.expense});
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -27,12 +26,41 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   late TransactionType _type;
 
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Groceries', 'icon': Icons.shopping_cart, 'type': TransactionType.expense},
-    {'name': 'Transport', 'icon': Icons.directions_bus, 'type': TransactionType.expense},
-    {'name': 'Entertainment', 'icon': Icons.movie, 'type': TransactionType.expense},
-    {'name': 'Shopping', 'icon': Icons.shopping_bag, 'type': TransactionType.expense},
-    {'name': 'Salary', 'icon': Icons.account_balance_wallet, 'type': TransactionType.income},
-    {'name': 'Netflix', 'icon': Icons.subscriptions, 'type': TransactionType.expense},
+    {
+      'name': 'Groceries',
+      'icon': Icons.shopping_cart,
+      'type': TransactionType.expense
+    },
+    {
+      'name': 'Transport',
+      'icon': Icons.directions_bus,
+      'type': TransactionType.expense
+    },
+    {
+      'name': 'Entertainment',
+      'icon': Icons.movie,
+      'type': TransactionType.expense
+    },
+    {
+      'name': 'Shopping',
+      'icon': Icons.shopping_bag,
+      'type': TransactionType.expense
+    },
+    {
+      'name': 'Salary',
+      'icon': Icons.account_balance_wallet,
+      'type': TransactionType.income
+    },
+    {
+      'name': 'Sales',
+      'icon': Icons.account_balance_wallet,
+      'type': TransactionType.income
+    },
+    {
+      'name': 'Netflix',
+      'icon': Icons.subscriptions,
+      'type': TransactionType.expense
+    },
   ];
 
   @override
@@ -62,7 +90,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         await _firestoreService.addTransaction(transaction);
         if (mounted) Navigator.pop(context);
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(e.toString())));
+        }
       }
     }
   }
@@ -146,20 +177,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      child: Text(text,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
     );
   }
 
   Widget _buildCategoryDropdown() {
-    final filteredCategories = _categories.where((cat) => cat['type'] == _type).toList();
-    
+    final filteredCategories =
+        _categories.where((cat) => cat['type'] == _type).toList();
+
     return DropdownButtonFormField<String>(
       value: _selectedCategory,
       hint: const Text("Select Category"),
       decoration: InputDecoration(
         prefixIcon: Icon(
           _selectedCategory != null
-              ? _categories.firstWhere((cat) => cat['name'] == _selectedCategory)['icon']
+              ? _categories
+                  .firstWhere((cat) => cat['name'] == _selectedCategory)['icon']
               : Icons.folder_open,
           color: Colors.grey.shade600,
         ),
@@ -192,7 +226,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       decoration: InputDecoration(
         prefixText: "\$ ",
         hintText: "0.00",
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
       ),
       validator: (val) {
         if (val == null || val.isEmpty) return "Required";
@@ -237,7 +273,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       maxLines: 3,
       decoration: InputDecoration(
         hintText: "Add a note",
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
       ),
     );
   }

@@ -87,8 +87,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        title: const Text("Home",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Padding(
+          padding: const EdgeInsets.only(right: 60),
+          child: Text(
+              "Hello ${_userName.isEmpty ? "User" : _userName.split(' ')[0]}",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+              )),
+        ),
       ),
       drawer: AppDrawer(
         userName: _userName,
@@ -96,30 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 25.0, vertical: 10.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                      "Hello, ${_userName.isEmpty ? "User" : _userName.split(' ')[0]}",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold)),
-                  const Text("Current Balance",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400)),
-                  const SizedBox(height: 5),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 10),
           Expanded(
             child: Container(
@@ -166,7 +149,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-     
       bottomNavigationBar: BottomNavBar(
         currentIndex: 0,
         onTap: (index) {
@@ -175,10 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (_) => const ReportingScreen()));
           }
         },
-        onFabTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const AddTransactionScreen())),
+        onFabTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AddTransactionScreen())),
       ),
     );
   }

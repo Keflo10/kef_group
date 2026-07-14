@@ -81,8 +81,25 @@ class AuthService {
         return 'The email address is not valid.';
       case 'weak-password':
         return 'The password provided is too weak.';
+      case 'invalid-credential':
+        return 'Invalid email or password.';
+      case 'user-disabled':
+        return 'This user has been disabled.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please try again later.';
       default:
         return e.message ?? 'An error occurred. Please try again.';
+    }
+  }
+
+  // Password Reset
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw 'An unexpected error occurred.';
     }
   }
 }

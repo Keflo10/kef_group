@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/pages/auth/signup.dart';
 import 'package:sales_app/pages/home/home_screen.dart';
+import 'package:sales_app/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
+
   // Show/Hide password
   bool _obscurePassword = true;
 
@@ -25,6 +29,38 @@ class _LoginScreenState extends State<LoginScreen> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  void _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all fields")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signIn(
+        email: email,
+        password: password,
+      );
+      // Wrapper will automatically navigate to HomeScreen if login is successful
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -37,11 +73,9 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Scaffold(
         backgroundColor: AppColors.primary,
         body: SafeArea(
-          top:
-              false, // Allows the primary color to flow smoothly behind the status bar
+          top: false,
           child: CustomScrollView(
             slivers: [
-              // 1. Top Header Section
               SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
@@ -67,7 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         "Login to continue tracking your expenses",
                         textAlign: TextAlign.center,
@@ -77,10 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
-              // 2. White Form Section (Expands to fill remaining screen height)
               SliverFillRemaining(
-                hasScrollBody: false, // Avoids nested scroll view conflicts
+                hasScrollBody: false,
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
@@ -107,7 +139,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Email
                             const Text("Email", style: TextStyle(fontSize: 14)),
                             const SizedBox(height: 8),
                             TextField(
@@ -125,7 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                             const SizedBox(height: 15),
 
-                            // Password
                             const Text("Password",
                                 style: TextStyle(fontSize: 14)),
                             const SizedBox(height: 8),
@@ -174,15 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: double.infinity,
                               height: 45,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  // Handle login
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const HomeScreen(),
-                                    ),
-                                  );
-                                },
+                                onPressed: _isLoading ? null : _login,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -190,13 +212,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Text(
-                                  "Login",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        "Login",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
                             ),
 
