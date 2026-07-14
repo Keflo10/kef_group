@@ -23,13 +23,10 @@ class CustomDrawer extends StatelessWidget {
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: AppColors.primary),
             currentAccountPicture: const CircleAvatar(
-              backgroundColor: AppColors.white,
+              backgroundColor: Colors.white,
               child: Icon(Icons.person, size: 40, color: AppColors.primary),
             ),
-            accountName: Text(
-              userName.isEmpty ? "User" : userName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
+            accountName: Text(userName.isEmpty ? "User" : userName, style: const TextStyle(fontWeight: FontWeight.bold)),
             accountEmail: Text(email ?? ""),
           ),
           ListTile(
@@ -40,11 +37,6 @@ class CustomDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.settings_outlined),
             title: const Text("Settings"),
-            onTap: () => Navigator.pop(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.help_outline),
-            title: const Text("Help & Support"),
             onTap: () => Navigator.pop(context),
           ),
           const Divider(),

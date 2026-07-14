@@ -1,4 +1,4 @@
-enum TransactionType { sale, expense }
+enum TransactionType { income, expense }
 
 class TransactionModel {
   final String id;
@@ -23,29 +23,25 @@ class TransactionModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'userId': userId,
       'title': title,
       'amount': amount,
       'category': category,
-      'type': type.name, // saves as 'sale' or 'expense'
+      'type': type.name,
       'date': date.toIso8601String(),
       'note': note,
     };
   }
 
-  factory TransactionModel.fromMap(
-    Map<String, dynamic> map,
-    String documentId,
-  ) {
+  factory TransactionModel.fromMap(Map<String, dynamic> map, String documentId) {
     return TransactionModel(
       id: documentId,
       userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       amount: (map['amount'] ?? 0.0).toDouble(),
       category: map['category'] ?? 'General',
-      type: map['type'] == 'sale'
-          ? TransactionType.sale
+      type: map['type'] == 'income' || map['type'] == 'sale' 
+          ? TransactionType.income
           : TransactionType.expense,
       date: map['date'] != null ? DateTime.parse(map['date']) : DateTime.now(),
       note: map['note'],
