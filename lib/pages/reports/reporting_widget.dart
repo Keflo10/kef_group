@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/models/transaction_model.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:sales_app/widgets/transaction_tile.dart';
+import 'package:sales_app/core/widgets/transaction_tile.dart';
 
 class ReportingWidget extends StatefulWidget {
   final List<TransactionModel> transactions;

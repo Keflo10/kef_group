@@ -20,15 +20,19 @@ class TransactionTile extends StatelessWidget {
               color: _getCategoryColor(transaction.category).withAlpha(25),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(_getCategoryIcon(transaction.category), color: _getCategoryColor(transaction.category)),
+            child: Icon(_getCategoryIcon(transaction.category),
+                color: _getCategoryColor(transaction.category)),
           ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(transaction.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(_formatDate(transaction.date), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(transaction.title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(_formatDate(transaction.date),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
           ),
@@ -36,14 +40,17 @@ class TransactionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                "${isIncome ? '+' : '-'}\$${transaction.amount.toStringAsFixed(2)}",
+                "ugx ${transaction.amount.toStringAsFixed(2)}",
+                // "${isIncome ? '+' : '-'}ugx ${transaction.amount.toStringAsFixed(2)}",
+
                 style: TextStyle(
                   color: isIncome ? AppColors.income : AppColors.expense,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),
-              const Text("Today", style: TextStyle(color: Colors.grey, fontSize: 12)),
+              const Text("Today",
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
         ],
@@ -53,33 +60,55 @@ class TransactionTile extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.day == now.day && date.month == now.month && date.year == now.year) return "Today";
+    if (date.day == now.day &&
+        date.month == now.month &&
+        date.year == now.year) {
+      return "Today";
+    }
     final yesterday = now.subtract(const Duration(days: 1));
-    if (date.day == yesterday.day && date.month == yesterday.month && date.year == yesterday.year) return "Yesterday";
+    if (date.day == yesterday.day &&
+        date.month == yesterday.month &&
+        date.year == yesterday.year) {
+      return "Yesterday";
+    }
     return DateFormat('MMM d, yyyy').format(date);
   }
 
   IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
-      case 'groceries': return Icons.shopping_cart;
-      case 'salary': return Icons.account_balance_wallet;
-      case 'transport': return Icons.directions_bus;
-      case 'entertainment': return Icons.movie;
-      case 'shopping': return Icons.shopping_bag;
-      case 'netflix': return Icons.subscriptions;
-      default: return Icons.category;
+      case 'groceries':
+        return Icons.shopping_cart;
+      case 'salary':
+        return Icons.account_balance_wallet;
+      case 'transport':
+        return Icons.directions_bus;
+      case 'entertainment':
+        return Icons.movie;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'netflix':
+        return Icons.subscriptions;
+      default:
+        return Icons.category;
     }
   }
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
-      case 'groceries': return Colors.blue;
-      case 'salary': return Colors.green;
-      case 'transport': return Colors.lightGreen;
-      case 'entertainment': return Colors.orange;
-      case 'shopping': return Colors.red;
-      case 'netflix': return Colors.redAccent;
-      default: return AppColors.primary;
+      case 'groceries':
+        return Colors.blue;
+      case 'salary':
+        return Colors.green;
+      case 'transport':
+        return Colors.lightGreen;
+      case 'entertainment':
+        return Colors.orange;
+      case 'shopping':
+        return Colors.red;
+      case 'netflix':
+        return Colors.redAccent;
+      default:
+        return AppColors.primary;
     }
   }
 }

@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/services/auth_service.dart';
 
-import '../home/home_screen.dart';
-
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -177,7 +175,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               size: 20,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                           ),
                         ),
@@ -201,7 +199,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               size: 20,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                           ),
                         ),
@@ -237,7 +235,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               },
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                           ),
                         ),
@@ -274,7 +272,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               },
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                           ),
                         ),
@@ -291,7 +289,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                             ),
                             child: _isLoading

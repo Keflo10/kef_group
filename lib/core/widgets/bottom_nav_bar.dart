@@ -27,7 +27,7 @@ class BottomNavBar extends StatelessWidget {
         children: [
           _navItem(Icons.home_outlined, "Home", 0),
           _fabItem(context),
-          _navItem(Icons.list_alt_outlined, "Reports", 1),
+          _navItem(Icons.list_alt_outlined, "List", 1),
         ],
       ),
     );
@@ -56,7 +56,10 @@ class BottomNavBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: isSelected ? AppColors.primary : Colors.grey),
-          Text(label, style: TextStyle(fontSize: 12, color: isSelected ? AppColors.primary : Colors.grey)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected ? AppColors.primary : Colors.grey)),
         ],
       ),
     );

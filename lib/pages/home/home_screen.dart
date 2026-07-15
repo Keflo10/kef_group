@@ -1,14 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/models/transaction_model.dart';
 import 'package:sales_app/services/auth_service.dart';
 import 'package:sales_app/services/firestore_service.dart';
-import 'package:sales_app/widgets/bottom_nav_bar.dart';
-import 'package:sales_app/widgets/app_drawer.dart';
-import 'package:sales_app/widgets/transaction_tile.dart';
+import 'package:sales_app/core/widgets/app_drawer.dart';
+import 'package:sales_app/core/widgets/transaction_tile.dart';
 import 'package:sales_app/pages/transactions/add_transaction_screen.dart';
 import 'package:sales_app/pages/reports/reporting_screen.dart';
-import 'package:sales_app/core/utils/greeting_util.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,10 +20,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
+
   String _userName = "";
   double _totalBalance = 0.0;
   List<TransactionModel> _recentTransactions = [];
   bool _isLoading = true;
+
+  // Prevent Firestore listener buildup
+  StreamSubscription<List<TransactionModel>>? _transactionsSub;
 
   @override
   void initState() {
@@ -31,47 +35,55 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _transactionsSub?.cancel();
+    super.dispose();
+  }
+
   void _loadData() async {
     final user = _authService.currentUser;
-    if (user != null) {
-      try {
-        final userDoc = await _firestoreService.getUserData(user.uid);
-        if (userDoc.exists && mounted) {
-          setState(() => _userName = userDoc.get('name') ?? "User");
-        }
-      } catch (e) {
-        debugPrint("Error fetching user data: $e");
-      }
-
-      _firestoreService.getTransactions(user.uid).listen(
-        (transactions) {
-          if (mounted) {
-            double balance = 0;
-            for (var t in transactions) {
-              balance +=
-                  (t.type == TransactionType.income ? t.amount : -t.amount);
-            }
-            setState(() {
-              _recentTransactions = transactions;
-              _totalBalance = balance;
-              _isLoading = false;
-            });
-          }
-        },
-        onError: (e) {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error: $e")),
-            );
-          }
-        },
-      );
-    } else {
+    if (user == null) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+      return;
     }
+
+    try {
+      final userDoc = await _firestoreService.getUserData(user.uid);
+      if (userDoc.exists && mounted) {
+        setState(() => _userName = userDoc.get('name') ?? "User");
+      }
+    } catch (e) {
+      debugPrint("Error fetching user data: $e");
+    }
+
+    _transactionsSub?.cancel();
+    _transactionsSub = _firestoreService.getTransactions(user.uid).listen(
+      (transactions) {
+        if (mounted) {
+          double balance = 0;
+          for (var t in transactions) {
+            balance +=
+                (t.type == TransactionType.income ? t.amount : -t.amount);
+          }
+          setState(() {
+            _recentTransactions = transactions;
+            _totalBalance = balance;
+            _isLoading = false;
+          });
+        }
+      },
+      onError: (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e")),
+          );
+        }
+      },
+    );
   }
 
   @override
@@ -139,26 +151,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     else if (_recentTransactions.isEmpty)
                       const Center(child: Text("No transactions yet"))
                     else
-                      ..._recentTransactions
-                          .take(5)
-                          .map((t) => TransactionTile(transaction: t)),
+                      Column(
+                        children: _recentTransactions
+                            .take(5)
+                            .map((t) => Column(
+                                  children: [
+                                    TransactionTile(transaction: t),
+                                    const Divider(height: 1, thickness: 1),
+                                  ],
+                                ))
+                            .toList()
+                          ..removeLast(),
+                      ),
                   ],
                 ),
               ),
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ReportingScreen()));
-          }
-        },
-        onFabTap: () => Navigator.push(context,
-            MaterialPageRoute(builder: (_) => const AddTransactionScreen())),
       ),
     );
   }

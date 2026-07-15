@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sales_app/core/constants/colors.dart';
+import 'package:sales_app/pages/home/home_screen.dart';
+import 'package:sales_app/pages/lists/list_screen.dart';
 import 'package:sales_app/services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -21,7 +23,10 @@ class AppDrawer extends StatelessWidget {
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: AppColors.primary),
             accountName: Text(userName.isEmpty ? "User" : userName,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontWeight: FontWeight.bold,
+                )),
             accountEmail: Text(email ?? ""),
             currentAccountPicture: const CircleAvatar(
               backgroundColor: Colors.white,
@@ -31,14 +36,33 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text("Home"),
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (_) => const HomeScreen())),
           ),
           ListTile(
-            leading: const Icon(Icons.bar_chart_outlined),
-            title: const Text("Reports"),
+            leading: const Icon(Icons.dashboard),
+            title: const Text("Dashoard"),
             onTap: () {
               Navigator.pop(context);
-              // Navigation can be triggered from here if needed
+              // Navigation to the dashboard can be
+            },
+          ),
+          // const Divider(
+          //   height: 0,
+          //   // thickness: 1,
+          //   // indent: 0,
+          //   // endIndent: 0,
+          //   color: Colors.grey,
+          // ),
+          ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text("List"),
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const TransactionListScreen()));
+              // Navigation to the list  can be
             },
           ),
           const Spacer(),

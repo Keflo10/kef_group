@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/pages/auth/signup.dart';
-import 'package:sales_app/pages/home/home_screen.dart';
 import 'package:sales_app/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -149,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 prefixIcon: const Icon(Icons.email_outlined,
                                     size: 20, color: Colors.black),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                             ),
@@ -179,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   },
                                 ),
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                             ),
@@ -209,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                                 child: _isLoading
@@ -254,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide(color: Colors.grey.shade400),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
                               ),

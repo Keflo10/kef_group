@@ -84,6 +84,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         type: _type,
         date: _selectedDate,
         note: _noteController.text,
+        // Backward compatible: treat the old single-amount entry as one line item.
+        items: [
+          TransactionItemModel(
+            productId: 'legacy',
+            productName: _selectedCategory ?? 'Transaction',
+            quantity: 1,
+            unitPrice: amount,
+            lineTotal: amount,
+          ),
+        ],
       );
 
       try {
@@ -187,7 +197,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         _categories.where((cat) => cat['type'] == _type).toList();
 
     return DropdownButtonFormField<String>(
-      value: _selectedCategory,
+      initialValue: _selectedCategory,
       hint: const Text("Select Category"),
       decoration: InputDecoration(
         prefixIcon: Icon(
