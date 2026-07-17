@@ -7,8 +7,13 @@ import 'package:intl/intl.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final TransactionType initialType;
-  const AddTransactionScreen(
-      {super.key, this.initialType = TransactionType.expense});
+  final TransactionModel? transaction; // Added for editing
+
+  const AddTransactionScreen({
+    super.key,
+    this.initialType = TransactionType.expense,
+    this.transaction,
+  });
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -16,13 +21,13 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _noteController = TextEditingController();
+  late TextEditingController _amountController;
+  late TextEditingController _noteController;
   final FirestoreService _firestoreService = FirestoreService();
   final AuthService _authService = AuthService();
 
   String? _selectedCategory;
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   late TransactionType _type;
 
   final List<Map<String, dynamic>> _categories = [
@@ -52,8 +57,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       'type': TransactionType.income
     },
     {
-      'name': 'Sales',
-      'icon': Icons.account_balance_wallet,
+      'name': 'Sale',
+      'icon': Icons.receipt_long,
       'type': TransactionType.income
     },
     {
@@ -63,10 +68,31 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     },
   ];
 
+  String _currency = 'UGX';
+
   @override
   void initState() {
     super.initState();
-    _type = widget.initialType;
+    _type = widget.transaction?.type ?? widget.initialType;
+    _amountController = TextEditingController(
+        text: widget.transaction != null ? widget.transaction!.amount.toStringAsFixed(0) : "");
+    _noteController = TextEditingController(
+        text: widget.transaction?.note ?? "");
+    _selectedCategory = widget.transaction?.category;
+    _selectedDate = widget.transaction?.date ?? DateTime.now();
+    _loadCurrency();
+  }
+
+  void _loadCurrency() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      final userDoc = await _firestoreService.getUserData(user.uid);
+      if (userDoc.exists && mounted) {
+        setState(() {
+          _currency = userDoc.get('currency') ?? "UGX";
+        });
+      }
+    }
   }
 
   void _save() async {
@@ -76,15 +102,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
       final amount = double.tryParse(_amountController.text) ?? 0.0;
       final transaction = TransactionModel(
-        id: '',
+        id: widget.transaction?.id ?? '',
         userId: user.uid,
+        // Phase-1: we don't yet have a shop document; default shopId to user.uid
+        shopId: widget.transaction?.shopId ?? user.uid,
+        truckerId: widget.transaction?.truckerId,
         title: _selectedCategory ?? "Transaction",
+
         amount: amount,
         category: _selectedCategory ?? "Other",
         type: _type,
         date: _selectedDate,
         note: _noteController.text,
-        // Backward compatible: treat the old single-amount entry as one line item.
+        // Update items to match current amount/category.
         items: [
           TransactionItemModel(
             productId: 'legacy',
@@ -97,12 +127,44 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
 
       try {
-        await _firestoreService.addTransaction(transaction);
+        if (widget.transaction == null) {
+          await _firestoreService.addTransaction(transaction);
+        } else {
+          await _firestoreService.updateTransaction(transaction);
+        }
         if (mounted) Navigator.pop(context);
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(e.toString())));
+        }
+      }
+    }
+  }
+
+  void _delete() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Transaction"),
+        content: const Text("Are you sure you want to delete this transaction?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("Delete", style: TextStyle(color: Colors.red))
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && widget.transaction != null) {
+      try {
+        await _firestoreService.deleteTransaction(widget.transaction!.id);
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
         }
       }
     }
@@ -118,8 +180,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context)),
-        title: const Text("Add Transaction",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(widget.transaction == null ? "Add Transaction" : "Edit Transaction",
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        actions: [
+          if (widget.transaction != null)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.white),
+              onPressed: _delete,
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -197,7 +266,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         _categories.where((cat) => cat['type'] == _type).toList();
 
     return DropdownButtonFormField<String>(
-      initialValue: _selectedCategory,
+      value: _selectedCategory,
       hint: const Text("Select Category"),
       decoration: InputDecoration(
         prefixIcon: Icon(
@@ -234,7 +303,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       controller: _amountController,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
-        prefixText: "\$ ",
+        prefixText: "$_currency ",
         hintText: "0.00",
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),

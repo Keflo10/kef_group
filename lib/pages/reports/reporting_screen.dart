@@ -21,6 +21,7 @@ class _ReportingScreenState extends State<ReportingScreen> {
   final AuthService _authService = AuthService();
   List<TransactionModel> _transactions = [];
   bool _isLoading = true;
+  String _currency = 'UGX';
 
   // Prevent Firestore listener buildup
   StreamSubscription<List<TransactionModel>>? _transactionsSub;
@@ -28,7 +29,7 @@ class _ReportingScreenState extends State<ReportingScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchTransactions();
+    _fetchData();
   }
 
   @override
@@ -37,13 +38,25 @@ class _ReportingScreenState extends State<ReportingScreen> {
     super.dispose();
   }
 
-  void _fetchTransactions() {
+  void _fetchData() async {
     final user = _authService.currentUser;
     if (user == null) {
       if (mounted) {
         setState(() => _isLoading = false);
       }
       return;
+    }
+
+    try {
+      final userDoc = await _firestoreService.getUserData(user.uid);
+      if (userDoc.exists && mounted) {
+        final data = userDoc.data() as Map<String, dynamic>?;
+        setState(() {
+          _currency = data?['currency'] ?? "UGX";
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching user data: $e");
     }
 
     _transactionsSub?.cancel();
@@ -83,6 +96,7 @@ class _ReportingScreenState extends State<ReportingScreen> {
       body: ReportingWidget(
         transactions: _transactions,
         isLoading: _isLoading,
+        currency: _currency,
       ),
       // bottomNavigationBar: BottomNavBar(
       //   currentIndex: 1,

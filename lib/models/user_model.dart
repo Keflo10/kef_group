@@ -2,12 +2,14 @@ class UserModel {
   final String uid;
   final String name;
   final String email;
+  final String currency;
   final DateTime? createdAt;
 
   UserModel({
     required this.uid,
     required this.name,
     required this.email,
+    this.currency = 'UGX',
     this.createdAt,
   });
 
@@ -17,6 +19,7 @@ class UserModel {
       'uid': uid,
       'name': name,
       'email': email,
+      'currency': currency,
       'createdAt': createdAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
     };
   }
@@ -27,6 +30,7 @@ class UserModel {
       uid: map['uid'] ?? '',
       name: map['name'] ?? '',
       email: map['email'] ?? '',
+      currency: map['currency'] ?? 'UGX',
       createdAt: map['createdAt'] != null ? DateTime.tryParse(map['createdAt']) : null,
     );
   }

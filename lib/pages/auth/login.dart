@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        "Login to continue tracking your expenses",
+                        "Login to continue tracking your sales and expenditures",
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontSize: 14),
                       ),

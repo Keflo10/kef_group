@@ -1,14 +1,18 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:sales_app/core/constants/colors.dart';
+import 'package:sales_app/models/customer_model.dart';
 import 'package:sales_app/models/transaction_model.dart';
 import 'package:sales_app/services/auth_service.dart';
 import 'package:sales_app/services/firestore_service.dart';
 import 'package:sales_app/core/widgets/app_drawer.dart';
 import 'package:sales_app/core/widgets/transaction_tile.dart';
 import 'package:sales_app/pages/transactions/add_transaction_screen.dart';
+import 'package:sales_app/pages/transactions/record_sale_screen.dart';
 import 'package:sales_app/pages/reports/reporting_screen.dart';
+import 'package:sales_app/pages/lists/list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,12 +26,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
   String _userName = "";
+  String _currency = "UGX";
   double _totalBalance = 0.0;
   List<TransactionModel> _recentTransactions = [];
   bool _isLoading = true;
 
   // Prevent Firestore listener buildup
   StreamSubscription<List<TransactionModel>>? _transactionsSub;
+  StreamSubscription<List<CustomerModel>>? _customersSub;
+  StreamSubscription<DocumentSnapshot>? _userSub;
 
   @override
   void initState() {
@@ -38,25 +45,41 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _transactionsSub?.cancel();
+    _customersSub?.cancel();
+    _userSub?.cancel();
     super.dispose();
   }
+
+  double _todayIncome = 0.0;
+  double _todayExpense = 0.0;
+  int _totalCustomers = 0;
 
   void _loadData() async {
     final user = _authService.currentUser;
     if (user == null) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
       return;
     }
 
-    try {
-      final userDoc = await _firestoreService.getUserData(user.uid);
-      if (userDoc.exists && mounted) {
-        setState(() => _userName = userDoc.get('name') ?? "User");
+    _userSub?.cancel();
+    _userSub = _firestoreService.getUserDataStream(user.uid).listen((doc) {
+      if (doc.exists && mounted) {
+        final data = doc.data() as Map<String, dynamic>?;
+        setState(() {
+          _userName = data?['name'] ?? "User";
+          _currency = data?['currency'] ?? "UGX";
+        });
       }
+    });
+
+    try {
+      _customersSub?.cancel();
+      _customersSub =
+          _firestoreService.getCustomersForShop(user.uid).listen((customers) {
+        if (mounted) setState(() => _totalCustomers = customers.length);
+      });
     } catch (e) {
-      debugPrint("Error fetching user data: $e");
+      debugPrint("Error fetching data: $e");
     }
 
     _transactionsSub?.cancel();
@@ -64,13 +87,29 @@ class _HomeScreenState extends State<HomeScreen> {
       (transactions) {
         if (mounted) {
           double balance = 0;
+          double todayIncome = 0;
+          double todayExpense = 0;
+
+          final now = DateTime.now();
+
           for (var t in transactions) {
-            balance +=
-                (t.type == TransactionType.income ? t.amount : -t.amount);
+            final isToday = t.date.year == now.year &&
+                t.date.month == now.month &&
+                t.date.day == now.day;
+
+            if (t.type == TransactionType.income) {
+              balance += t.amount;
+              if (isToday) todayIncome += t.amount;
+            } else {
+              balance -= t.amount;
+              if (isToday) todayExpense += t.amount;
+            }
           }
           setState(() {
             _recentTransactions = transactions;
             _totalBalance = balance;
+            _todayIncome = todayIncome;
+            _todayExpense = todayExpense;
             _isLoading = false;
           });
         }
@@ -117,15 +156,19 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const SizedBox(height: 10),
           Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30)),
-              ),
+              child: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+            ),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _loadData();
+              },
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(25),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,9 +185,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 15),
                     _buildQuickActions(),
                     const SizedBox(height: 30),
-                    const Text("Recent Transactions",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text("Recent Transactions",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) =>
+                                      const TransactionListScreen()),
+                            );
+                          },
+                          child: const Text("See all"),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 15),
                     if (_isLoading)
                       const Center(child: CircularProgressIndicator())
@@ -153,11 +212,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     else
                       Column(
                         children: _recentTransactions
-                            .take(5)
+                            .take(8)
                             .map((t) => Column(
                                   children: [
-                                    TransactionTile(transaction: t),
-                                    const Divider(height: 1, thickness: 1),
+                                    InkWell(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                AddTransactionScreen(
+                                              transaction: t,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: TransactionTile(
+                                        transaction: t,
+                                        currency: _currency,
+                                      ),
+                                    ),
                                   ],
                                 ))
                             .toList()
@@ -167,26 +241,129 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-          ),
+          )),
         ],
       ),
     );
   }
 
   Widget _buildBalanceCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Center(
-        child: Text(
-          "ugx ${_totalBalance.toStringAsFixed(2)}",
-          style: const TextStyle(
-              color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              const Text(
+                "Current Balance",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "$_currency ${_totalBalance.toStringAsFixed(0)}",
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 20),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          childAspectRatio: 1.5,
+          mainAxisSpacing: 15,
+          crossAxisSpacing: 15,
+          children: [
+            _buildGridStatCard(
+              "Today's Sales",
+              _todayIncome,
+              Icons.trending_up,
+              AppColors.income,
+            ),
+            _buildGridStatCard(
+              "Today's Expense",
+              _todayExpense,
+              Icons.trending_down,
+              AppColors.expense,
+            ),
+            _buildGridStatCard(
+              "Profit",
+              _todayIncome - _todayExpense,
+              Icons.account_balance_wallet,
+              Colors.orange,
+            ),
+            _buildGridStatCard(
+              "Total Customers",
+              _totalCustomers.toDouble(),
+              Icons.people,
+              Colors.purple,
+              isCurrency: false,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGridStatCard(
+      String label, double amount, IconData icon, Color color,
+      {bool isCurrency = true}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500)),
+              Icon(icon, color: color.withValues(alpha: 0.7), size: 16),
+            ],
+          ),
+          Text(
+            isCurrency
+                ? "$_currency ${amount.toStringAsFixed(0)}"
+                : amount.toInt().toString(),
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: Colors.blueGrey[800]),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
@@ -194,11 +371,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildQuickActions() {
     return Column(
       children: [
+        _wideActionButton(
+            "Record a Sale ", Icons.receipt_long, AppColors.income, () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const RecordSaleScreen()));
+        }),
+        const SizedBox(height: 15),
         Row(
           children: [
             Expanded(
                 child: _actionButton(
-                    "Add Income",
+                    "Quick Income",
                     Icons.add_circle_outline,
                     AppColors.income,
                     () => _navigateToAdd(TransactionType.income))),
@@ -212,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 15),
-        _wideActionButton("View Report", Icons.bar_chart, AppColors.primary,
+        _wideActionButton("View Reports", Icons.bar_chart, AppColors.primary,
             () {
           Navigator.push(context,
               MaterialPageRoute(builder: (_) => const ReportingScreen()));

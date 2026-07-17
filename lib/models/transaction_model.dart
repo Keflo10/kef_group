@@ -31,9 +31,7 @@ class TransactionItemModel {
     return TransactionItemModel(
       productId: (map['productId'] ?? '').toString(),
       productName: (map['productName'] ?? '').toString(),
-      quantity: (map['quantity'] ?? 0) is int
-          ? map['quantity']
-          : int.tryParse((map['quantity'] ?? '0').toString()) ?? 0,
+      quantity: int.tryParse(map['quantity']?.toString() ?? '0') ?? 0,
       unitPrice: (map['unitPrice'] ?? 0.0).toDouble(),
       lineTotal: (map['lineTotal'] ?? 0.0).toDouble(),
     );
@@ -42,7 +40,16 @@ class TransactionItemModel {
 
 class TransactionModel {
   final String id;
+
+  /// Backward compatibility: legacy field used by existing documents/UI.
   final String userId;
+
+  /// New schema field (ShopLedger). When absent, fall back to [userId].
+  final String? shopId;
+
+  /// Trucker linkage (Sales/Expenditure per trucker).
+  /// Optional for backward compatibility.
+  final String? truckerId;
 
   /// Backward compatibility fields (existing UI uses these)
   final String title;
@@ -62,6 +69,8 @@ class TransactionModel {
   TransactionModel({
     required this.id,
     required this.userId,
+    this.shopId,
+    this.truckerId,
     required this.title,
     required this.amount,
     required this.category,
@@ -73,7 +82,12 @@ class TransactionModel {
 
   Map<String, dynamic> toMap() {
     return {
+      // Legacy
       'userId': userId,
+      // New
+      if (shopId != null) 'shopId': shopId,
+      if (truckerId != null) 'truckerId': truckerId,
+
       'title': title,
       'amount': amount,
       'category': category,
@@ -97,9 +111,15 @@ class TransactionModel {
     // If old documents exist (no items), compute amount from top-level.
     final amount = (map['amount'] ?? 0.0).toDouble();
 
+    final legacyUserId = map['userId']?.toString() ?? '';
+    final shopId = map['shopId']?.toString();
+    final truckerId = map['truckerId']?.toString();
+
     return TransactionModel(
       id: documentId,
-      userId: map['userId'] ?? '',
+      userId: legacyUserId,
+      shopId: shopId ?? legacyUserId,
+      truckerId: truckerId,
       title: (map['title'] ?? '').toString(),
       amount: amount,
       category: (map['category'] ?? 'General').toString(),

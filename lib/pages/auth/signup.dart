@@ -122,7 +122,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        "Sign up to start tracking your expenses and sales",
+                        "Sign up to start tracking your sales and expenditures",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,

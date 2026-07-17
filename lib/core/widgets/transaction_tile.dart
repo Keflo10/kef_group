@@ -5,57 +5,61 @@ import 'package:intl/intl.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
-  const TransactionTile({super.key, required this.transaction});
+  final String currency;
+  const TransactionTile({super.key, required this.transaction, this.currency = 'UGX'});
 
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _getCategoryColor(transaction.category).withAlpha(25),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_getCategoryIcon(transaction.category),
-                color: _getCategoryColor(transaction.category)),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(transaction.title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(_formatDate(transaction.date),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    return Card(
+        margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Row(
             children: [
-              Text(
-                "ugx ${transaction.amount.toStringAsFixed(2)}",
-                // "${isIncome ? '+' : '-'}ugx ${transaction.amount.toStringAsFixed(2)}",
-
-                style: TextStyle(
-                  color: isIncome ? AppColors.income : AppColors.expense,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                decoration: BoxDecoration(
+                  color: _getCategoryColor(transaction.category).withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(_getCategoryIcon(transaction.category),
+                    color: _getCategoryColor(transaction.category)),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(transaction.title,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(_formatDate(transaction.date),
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
                 ),
               ),
-              const Text("Today",
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "$currency ${transaction.amount.toStringAsFixed(0)}",
+                    style: TextStyle(
+                      color: isIncome ? AppColors.income : AppColors.expense,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(_formatDate(transaction.date),
+                      style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 
   String _formatDate(DateTime date) {
@@ -88,6 +92,8 @@ class TransactionTile extends StatelessWidget {
         return Icons.shopping_bag;
       case 'netflix':
         return Icons.subscriptions;
+      case 'sale':
+        return Icons.receipt_long;
       default:
         return Icons.category;
     }
@@ -107,6 +113,8 @@ class TransactionTile extends StatelessWidget {
         return Colors.red;
       case 'netflix':
         return Colors.redAccent;
+      case 'sale':
+        return AppColors.income;
       default:
         return AppColors.primary;
     }

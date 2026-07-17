@@ -20,6 +20,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   final FirestoreService _firestoreService = FirestoreService();
 
   String _userName = "";
+  String _currency = "UGX";
   bool _isLoading = true;
   List<TransactionModel> _transactions = [];
 
@@ -53,7 +54,11 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
     try {
       final userDoc = await _firestoreService.getUserData(user.uid);
       if (userDoc.exists && mounted) {
-        setState(() => _userName = userDoc.get('name') ?? "User");
+        final data = userDoc.data() as Map<String, dynamic>?;
+        setState(() {
+          _userName = data?['name'] ?? "User";
+          _currency = data?['currency'] ?? "UGX";
+        });
       }
     } catch (e) {
       debugPrint('Error fetching user data: $e');
@@ -158,6 +163,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                           itemBuilder: (context, index) {
                             return TransactionTile(
                               transaction: displayedTransactions[index],
+                              currency: _currency,
                             );
                           },
                         ),

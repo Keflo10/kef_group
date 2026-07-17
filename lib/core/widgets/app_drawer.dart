@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:sales_app/core/constants/colors.dart';
 import 'package:sales_app/pages/home/home_screen.dart';
 import 'package:sales_app/pages/lists/list_screen.dart';
+import 'package:sales_app/pages/lists/customers_screen.dart';
+import 'package:sales_app/pages/admin/admin_products_screen.dart';
+import 'package:sales_app/pages/settings/settings_screen.dart';
+import 'package:sales_app/pages/reports/reporting_screen.dart';
+import 'package:sales_app/pages/transactions/record_sale_screen.dart';
 import 'package:sales_app/services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -34,36 +39,59 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.home_outlined),
+            leading: const Icon(Icons.home_outlined, color: AppColors.primary),
             title: const Text("Home"),
-            onTap: () => Navigator.push(
+            onTap: () => Navigator.pushReplacement(
                 context, MaterialPageRoute(builder: (_) => const HomeScreen())),
           ),
           ListTile(
-            leading: const Icon(Icons.dashboard),
-            title: const Text("Dashoard"),
-            onTap: () {
-              Navigator.pop(context);
-              // Navigation to the dashboard can be
-            },
+            leading: const Icon(Icons.inventory_2_outlined,
+                color: AppColors.primary),
+            title: const Text("Products"),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const AdminProductsScreen())),
           ),
-          // const Divider(
-          //   height: 0,
-          //   // thickness: 1,
-          //   // indent: 0,
-          //   // endIndent: 0,
-          //   color: Colors.grey,
-          // ),
           ListTile(
-            leading: const Icon(Icons.list),
-            title: const Text("List"),
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const TransactionListScreen()));
-              // Navigation to the list  can be
-            },
+            leading: const Icon(Icons.receipt_long_outlined,
+                color: AppColors.primary),
+            title: const Text("Sales"),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const RecordSaleScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.people_outline, color: AppColors.primary),
+            title: const Text("Customers"),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CustomersScreen())),
+          ),
+          ListTile(
+            leading:
+                const Icon(Icons.history_outlined, color: AppColors.primary),
+            title: const Text("Transactions"),
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const TransactionListScreen())),
+          ),
+          ListTile(
+            leading:
+                const Icon(Icons.bar_chart_outlined, color: AppColors.primary),
+            title: const Text("Reports"),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const ReportingScreen())),
+          ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined,
+                color: AppColors.primary),
+            title: const Text("Notifications"),
+            onTap: () {},
+          ),
+          ListTile(
+            leading:
+                const Icon(Icons.settings_outlined, color: AppColors.primary),
+            title: const Text("Settings"),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen())),
           ),
           const Spacer(),
           const Divider(),

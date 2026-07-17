@@ -7,29 +7,67 @@ import 'package:sales_app/core/widgets/transaction_tile.dart';
 class ReportingWidget extends StatefulWidget {
   final List<TransactionModel> transactions;
   final bool isLoading;
+  final String currency;
 
   const ReportingWidget({
     super.key,
     required this.transactions,
     required this.isLoading,
+    this.currency = 'UGX',
   });
 
   @override
   State<ReportingWidget> createState() => _ReportingWidgetState();
 }
 
+enum ReportingTimeRange { thisMonth, lastMonth, thisYear }
+
 class _ReportingWidgetState extends State<ReportingWidget> {
   TransactionType _selectedType = TransactionType.expense;
+  ReportingTimeRange _selectedRange = ReportingTimeRange.thisMonth;
+
+  DateTimeRange? get _activeDateRange {
+    final now = DateTime.now();
+
+    DateTime start;
+    DateTime end;
+
+    switch (_selectedRange) {
+      case ReportingTimeRange.thisMonth:
+        start = DateTime(now.year, now.month, 1);
+        end = DateTime(now.year, now.month + 1, 1);
+        break;
+      case ReportingTimeRange.lastMonth:
+        final lastMonth = DateTime(now.year, now.month - 1, 1);
+        start = DateTime(lastMonth.year, lastMonth.month, 1);
+        end = DateTime(now.year, now.month, 1);
+        break;
+      case ReportingTimeRange.thisYear:
+        start = DateTime(now.year, 1, 1);
+        end = DateTime(now.year + 1, 1, 1);
+        break;
+    }
+
+    // We'll treat the range as: start <= date < end
+    return DateTimeRange(start: start, end: end);
+  }
+
+  List<TransactionModel> get _filteredTransactions {
+    final range = _activeDateRange;
+    return widget.transactions.where((t) {
+      if (t.type != _selectedType) return false;
+      if (range == null) return true;
+      return !t.date.isBefore(range.start) && t.date.isBefore(range.end);
+    }).toList();
+  }
 
   double get _totalAmount {
-    return widget.transactions
-        .where((t) => t.type == _selectedType)
-        .fold(0, (sum, t) => sum + t.amount);
+    return _filteredTransactions.fold(0, (sum, t) => sum + t.amount);
   }
 
   Map<String, double> get _categoryData {
-    Map<String, double> data = {};
-    for (var t in widget.transactions.where((t) => t.type == _selectedType)) {
+    final Map<String, double> data = {};
+    for (var t in _filteredTransactions) {
       data[t.category] = (data[t.category] ?? 0) + t.amount;
     }
     return data;
@@ -57,44 +95,91 @@ class _ReportingWidgetState extends State<ReportingWidget> {
                       children: [
                         _buildTypeToggle(),
                         const SizedBox(height: 20),
-                        _buildFilterDropdown(),
-                        const SizedBox(height: 20),
-                        _buildChartSection(),
+                        Row(
+                          children: [
+                            Expanded(child: _buildFilterDropdown()),
+                          ],
+                        ),
                         const SizedBox(height: 30),
-                        Text(
-                            "Total ${_selectedType == TransactionType.expense ? 'Expenses' : 'Income'}",
-                            style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87)),
-                        Text("ugx ${_totalAmount.toStringAsFixed(2)}",
-                            style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black)),
-                        const SizedBox(height: 30),
-                        const Text("Expense Breakdown",
+                        Center(child: _buildChartSection()),
+                        const SizedBox(height: 40),
+                        const Text("Summary",
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 15),
+                        _buildSummaryCard(),
+                        const SizedBox(height: 30),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                                "${_selectedType == TransactionType.expense ? 'Expense' : 'Sale'} History",
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            TextButton(
+                                onPressed: () {}, child: const Text("See all")),
+                          ],
+                        ),
                         const SizedBox(height: 10),
-                        if (widget.transactions
-                            .where((t) => t.type == _selectedType)
-                            .isEmpty)
+                        if (_filteredTransactions.isEmpty)
                           const Center(
                               child: Padding(
                             padding: EdgeInsets.all(20.0),
                             child: Text("No transactions in this category"),
                           ))
                         else
-                          ...widget.transactions
-                              .where((t) => t.type == _selectedType)
-                              .map((t) => TransactionTile(transaction: t)),
+                          ..._filteredTransactions
+                              .take(5)
+                              .map((t) => TransactionTile(
+                                    transaction: t,
+                                    currency: widget.currency,
+                                  )),
                       ],
                     ),
                   ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Total Amount",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+              const SizedBox(height: 5),
+              Text(
+                "${widget.currency} ${_totalAmount.toStringAsFixed(0)}",
+                style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary),
+              ),
+            ],
+          ),
+          Icon(
+            _selectedType == TransactionType.income
+                ? Icons.trending_up
+                : Icons.trending_down,
+            color: _selectedType == TransactionType.income
+                ? AppColors.income
+                : AppColors.expense,
+            size: 40,
+          ),
+        ],
+      ),
     );
   }
 
@@ -105,8 +190,8 @@ class _ReportingWidgetState extends State<ReportingWidget> {
           color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10)),
       child: Row(
         children: [
-          _toggleButton("Expenses", TransactionType.expense),
-          _toggleButton("Income", TransactionType.income),
+          _toggleButton("Expenditures", TransactionType.expense),
+          _toggleButton("Sales", TransactionType.income),
         ],
       ),
     );
@@ -135,6 +220,19 @@ class _ReportingWidgetState extends State<ReportingWidget> {
   }
 
   Widget _buildFilterDropdown() {
+    String selectedLabel;
+    switch (_selectedRange) {
+      case ReportingTimeRange.thisMonth:
+        selectedLabel = 'This Month';
+        break;
+      case ReportingTimeRange.lastMonth:
+        selectedLabel = 'Last Month';
+        break;
+      case ReportingTimeRange.thisYear:
+        selectedLabel = 'This Year';
+        break;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -142,12 +240,27 @@ class _ReportingWidgetState extends State<ReportingWidget> {
           borderRadius: BorderRadius.circular(10)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: "This Month",
+          value: selectedLabel,
           isExpanded: true,
-          items: ["This Month", "Last Month", "This Year"]
+          items: ['This Month', 'Last Month', 'This Year']
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
-          onChanged: (val) {},
+          onChanged: (val) {
+            if (val == null) return;
+            setState(() {
+              switch (val) {
+                case 'This Month':
+                  _selectedRange = ReportingTimeRange.thisMonth;
+                  break;
+                case 'Last Month':
+                  _selectedRange = ReportingTimeRange.lastMonth;
+                  break;
+                case 'This Year':
+                  _selectedRange = ReportingTimeRange.thisYear;
+                  break;
+              }
+            });
+          },
         ),
       ),
     );
@@ -155,37 +268,41 @@ class _ReportingWidgetState extends State<ReportingWidget> {
 
   Widget _buildChartSection() {
     final data = _categoryData;
-    return Row(
+    if (data.isEmpty)
+      return const SizedBox(
+          height: 150, child: Center(child: Text("No data for chart")));
+
+    return Column(
       children: [
-        Expanded(
-          flex: 2,
-          child: SizedBox(
-            height: 150,
-            child: data.isEmpty
-                ? const Center(child: Text("No data"))
-                : PieChart(
-                    PieChartData(
-                      sectionsSpace: 0,
-                      centerSpaceRadius: 40,
-                      sections: data.entries.map((e) {
-                        return PieChartSectionData(
-                          color: _getCategoryColor(e.key),
-                          value: e.value,
-                          title: '',
-                          radius: 20,
-                        );
-                      }).toList(),
-                    ),
-                  ),
+        SizedBox(
+          height: 180,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 2,
+              centerSpaceRadius: 45,
+              sections: data.entries.map((e) {
+                return PieChartSectionData(
+                  color: _getCategoryColor(e.key),
+                  value: e.value,
+                  title:
+                      '${(e.value / _totalAmount * 100).toStringAsFixed(0)}%',
+                  radius: 30,
+                  titleStyle: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                );
+              }).toList(),
+            ),
           ),
         ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: data.keys
-                .map((cat) => _buildLegendItem(cat, _getCategoryColor(cat)))
-                .toList(),
-          ),
+        const SizedBox(height: 20),
+        Wrap(
+          spacing: 15,
+          runSpacing: 10,
+          children: data.keys
+              .map((cat) => _buildLegendItem(cat, _getCategoryColor(cat)))
+              .toList(),
         ),
       ],
     );
@@ -224,6 +341,8 @@ class _ReportingWidgetState extends State<ReportingWidget> {
         return Colors.green;
       case 'netflix':
         return Colors.redAccent;
+      case 'sale':
+        return AppColors.income;
       default:
         return AppColors.primary;
     }
